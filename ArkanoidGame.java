@@ -13,7 +13,7 @@ public class ArkanoidGame extends JPanel implements MouseMotionListener, ActionL
     private final int COLS = 5;
 
     private int ballX = 250;
-    private int ballY = 300; // más arriba para evitar game over inmediato
+    private int ballY = 300;
     private int ballVelX = 2;
     private int ballVelY = 2;
 
@@ -21,6 +21,7 @@ public class ArkanoidGame extends JPanel implements MouseMotionListener, ActionL
     private final int paddleY = 550;
 
     private boolean isGameOver = false;
+    private boolean isVictory = false;
 
     private Rectangle[][] blocks;
     private Timer timer;
@@ -29,7 +30,7 @@ public class ArkanoidGame extends JPanel implements MouseMotionListener, ActionL
 
     public ArkanoidGame() {
         setBackground(Color.BLACK);
-        setLayout(null); // para posicionar el botón
+        setLayout(null); // para usar botón con coordenadas
         addMouseMotionListener(this);
         setFocusable(true);
         initializeBlocks();
@@ -62,6 +63,7 @@ public class ArkanoidGame extends JPanel implements MouseMotionListener, ActionL
         ballVelY = 2;
         paddleX = 200;
         isGameOver = false;
+        isVictory = false;
         restartButton.setVisible(false);
         initializeBlocks();
         timer.start();
@@ -79,7 +81,7 @@ public class ArkanoidGame extends JPanel implements MouseMotionListener, ActionL
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (isGameOver) return;
+        if (isGameOver || isVictory) return;
 
         ballX += ballVelX;
         ballY += ballVelY;
@@ -96,7 +98,7 @@ public class ArkanoidGame extends JPanel implements MouseMotionListener, ActionL
             ballY = paddleY - BALL_SIZE;
         }
 
-        // Game over solo si pasa debajo de la paleta
+        // Game Over si pasa la paleta
         if (ballY >= paddleY + PADDLE_HEIGHT) {
             isGameOver = true;
             timer.stop();
@@ -116,7 +118,28 @@ public class ArkanoidGame extends JPanel implements MouseMotionListener, ActionL
             }
         }
 
+        // Verificar victoria
+        if (checkVictory()) {
+            isVictory = true;
+            timer.stop();
+            repaint();
+
+            // Reiniciar automáticamente tras 3 segundos
+            new Timer(3000, ev -> resetGame()).start();
+        }
+
         repaint();
+    }
+
+    private boolean checkVictory() {
+        for (Rectangle[] row : blocks) {
+            for (Rectangle block : row) {
+                if (block != null) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     @Override
@@ -146,6 +169,15 @@ public class ArkanoidGame extends JPanel implements MouseMotionListener, ActionL
             g.setColor(Color.WHITE);
             g.setFont(new Font("Arial", Font.BOLD, 30));
             String msg = "Game Over";
+            int msgWidth = g.getFontMetrics().stringWidth(msg);
+            g.drawString(msg, (getWidth() - msgWidth) / 2, getHeight() / 2 - 30);
+        }
+
+        // Mensaje de Victoria
+        if (isVictory) {
+            g.setColor(Color.YELLOW);
+            g.setFont(new Font("Arial", Font.BOLD, 30));
+            String msg = "¡Ganaste!";
             int msgWidth = g.getFontMetrics().stringWidth(msg);
             g.drawString(msg, (getWidth() - msgWidth) / 2, getHeight() / 2 - 30);
         }
